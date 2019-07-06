@@ -2,6 +2,7 @@ from bs4 import BeautifulSoup
 import pickle
 import os
 
+DELIMITER = '*;*'
 directory_list = ['2015']
 
 
@@ -12,7 +13,7 @@ def string_stripper(text,replace_list):
         param1: text -- text string with possible unwanted characters
         param2: replace_list -- list of unwanted characters as strings
     Returns:
-        returns a string with unwanted characters removed
+        returns a string with unwanted characters removed, if any are present
     '''
     string_acc = text
 
@@ -21,6 +22,66 @@ def string_stripper(text,replace_list):
             string_acc = string_acc.replace(repl,' ')
     
     return string_acc
+
+def table_explorer(table,dictionary,section,theader=False):
+    ''' '''
+    # table_index = 1
+    # for table in tables:
+    if( table is None):
+        pass
+    else:
+        table_headers = ''
+        if(theader):
+            for th in table.find_all('th'):
+                for string in th.strings:
+                    table_headers += string.strip()
+                table_headers += DELIMITER
+            dictionary[section+'-header'] = table_headers[:-len(DELIMITER)]
+        row_index = 1
+        table_row_acc = '' # table row accumulator concatenates all table rows
+        for table_row in table.find_all('tr'):
+            td_acc = ''
+            for td in table_row.find_all('td'):
+                for string in td.strings:
+                    td_acc += string.strip()
+                td_acc += DELIMITER # marks the end of table data tag. dockets use '*;*' so need a new unique delimeter
+            cleaned_string = string_stripper(td_acc,replace_list)
+            table_row_acc += cleaned_string # cleaned_string[:-1]
+            row_index += 1
+        dictionary[section] = table_row_acc[:-len(DELIMITER)] # ignore the last three characters *;*
+    # table_index += 1
+
+# def attorney_explorer(table,dictionary,section,theader=False):
+#     ''' '''
+#     if(table is None):
+#         pass
+#     else:
+#         if(theader):
+#             for th in table.find_all('th'):
+#                 for string in th.strings:
+#                     table_headers += string.strip()
+#                 table_headers += ';'
+#             dictionary[section+'-header'] = table_headers[:-1]
+#         row_index = 1
+#         attorney_table_data = table.find_all('td')
+#         attorney_table_data_length = len(attorney_table_data)
+
+#         table_row_acc = ''
+#         if(attorney_table_data_length>2):
+#             for data in attorney_table_data:
+#                 pass
+#         elif(attorney_table_data_length==2):
+#             for td in table_row.find_all('td'):
+#                 for string in td.strings:
+#                     td_acc += string.strip()
+#                 td_acc += ';' # marks the end of table data tag
+#         elif(attorney_table_data_length==0):
+#             pass
+        
+#         cleaned_string = string_stripper(td_acc,replace_list)
+#         table_row_acc += cleaned_string # cleaned_string[:-1]
+#     row_index += 1
+#     dictionary[section] = table_row_acc[:-1]
 
 replace_list = ['\t,','\n','\xa0'] # use regular expression to replace multiple '\n' characters with 1. same with multiple spaces
 
@@ -41,13 +102,9 @@ for year in directory_list:
         f.close()
 
         string_acc = ''
-
         po_dictionary = dict()
-
         section_list = ['case_details','party','attorneys','events','issues','disposition','dockets']
-
         tables = soup.find_all('table')
-
         # case details
         po_dictionary['case_details'] = soup.find('table',attrs='caseStyle')
 
@@ -76,34 +133,6 @@ for year in directory_list:
         # table4: thead
         # table5: thead
 
-        def table_explorer(table,dictionary,section,theader=False):
-            ''' '''
-            # table_index = 1
-            # for table in tables:
-            if( table is None):
-                pass
-            else:
-                table_headers = ''
-                if(theader):
-                    for th in table.find_all('th'):
-                        for string in th.strings:
-                            table_headers += string.strip()
-                        table_headers += ';'
-                    dictionary[section+'-header'] = table_headers[:-1]
-                row_index = 1
-                table_row_acc = '' # table row accumulator concatenates all table rows
-                for table_row in table.find_all('tr'):
-                    td_acc = ''
-                    for td in table_row.find_all('td'):
-                        for string in td.strings:
-                            td_acc += string.strip()
-                        td_acc += ';' # marks the end of table data tag
-                    cleaned_string = string_stripper(td_acc,replace_list)
-                    table_row_acc += cleaned_string # cleaned_string[:-1]
-                    row_index += 1
-                dictionary[section] = table_row_acc[:-1]
-            # table_index += 1
-
         # case details
         table_explorer(po_dictionary['case_details'],po_dictionary,'case_details')
         # Attorneys
@@ -121,19 +150,3 @@ for year in directory_list:
         pickle.dump(po_dictionary,p_file)
 
     os.chdir('..')
-''''
-table header scrapper
-table2_headers
-for th in table2.find_all('th'):
-    for string in th.strings:
-        table2_headers += string.strip+';'
-
-'''
-# string_list = string_acc.split(';')
-
-# while('' in string_list):
-#     string_list.remove('')
-
-# case_details = ' '.join(string_list)
-
-# print(case_details)

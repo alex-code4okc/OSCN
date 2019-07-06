@@ -60,15 +60,14 @@ class ProtectiveOrder(models.Model):
     filed_date = models.DateField()
     closed_date = models.DateField(blank=True, null=True)
     judge = models.ForeignKey(judge, on_delete=models.CASCADE, blank=True, null=True)
+
     plaintiffs = models.ManyToManyField(party, related_name='PO_plaintiffs')
     defendants = models.ManyToManyField(party, related_name='PO_defendants')
     attorneys = models.ManyToManyField(attorney, blank=True)
+    
     events = models.ManyToManyField(event, blank=True)
     issues = models.ManyToManyField(issue, blank=True)
     docket = models.ManyToManyField(DocketEntry, blank=True)
     
     def __str__(self):
         return f"{self.po_number} - Filed: {self.filed_date} - Judge: {self.judge}"
-
-
-
